@@ -18,18 +18,6 @@
   #include "cinchtest.h"
 #endif
 
-#define _UTIL_STRINGIFY(s) #s
-#define EXPAND_AND_STRINGIFY(s) _UTIL_STRINGIFY(s)
-
-#ifndef GTEST_INIT
-  #include "gtest-init.h"
-#else
-  #include EXPAND_AND_STRINGIFY(GTEST_INIT)
-#endif
-
-#undef EXPAND_AND_STRINGIFY
-#undef _UTIL_STRINGIFY
-
 //----------------------------------------------------------------------------//
 // Implement a function to print test information for the user.
 //----------------------------------------------------------------------------//
