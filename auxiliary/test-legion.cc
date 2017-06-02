@@ -57,6 +57,8 @@ void print_devel_code_label(std::string name) {
 //----------------------------------------------------------------------------//
 
 int main(int argc, char ** argv) {
+  
+  int rank(0);
 
 #if defined(ENABLE_MPI)
   // Get the MPI version
@@ -85,7 +87,6 @@ int main(int argc, char ** argv) {
 #endif
 
   // Disable XML output, if requested, everywhere but rank 0
-  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   std::vector<char *> args(argv, argv+argc);
   if (rank > 0) {
@@ -115,14 +116,48 @@ int main(int argc, char ** argv) {
 
   // Add command-line options
   desc.add_options()
+    ("help,h", "produce help message")
     ("tags,t", value(&tags)->implicit_value("0"),
       "--tags=tag1,tag2 --tags by itself will print the available tags.");
 
+  // parse the command line, allowing unregistered options
   variables_map vm;
-  store(parse_command_line(argc, argv, desc), vm);
-  notify(vm);
-#endif // ENABLE_BOOST_PROGRAM_OPTIONS
+  parsed_options parsed = 
+    command_line_parser(argc, argv).options(desc).allow_unregistered().run();
+  store(parsed, vm);
 
+  notify(vm);
+
+  // gather the unregistered options, if there are any, print a help message
+  // and die nicely
+  std::vector<std::string> unrecog_options = 
+    collect_unrecognized(parsed.options, include_positional);
+  
+  if ( unrecog_options.size() ) {
+    if ( rank == 0 ) {
+      std::cout << std::endl << "Unrecognized options: ";
+      for ( int i=0; i<unrecog_options.size(); ++i ) {
+        std::cout << unrecog_options[i] << " ";
+      }
+      std::cout << std::endl << std::endl << desc << std::endl;
+    }
+#if defined(ENABLE_MPI)
+    MPI_Finalize();
+#endif
+    return 1;
+  };
+
+  // produce a help message
+  if ( vm.count("help") ) {
+    if ( rank == 0 )
+      std::cout << std::endl << desc << std::endl;
+#if defined(ENABLE_MPI)
+    MPI_Finalize();
+#endif
+    return 1;
+  }
+  
+#endif // ENABLE_BOOST_PROGRAM_OPTIONS
   int result(0);
 
   if(tags == "0") {
