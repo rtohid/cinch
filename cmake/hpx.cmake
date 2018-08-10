@@ -17,8 +17,15 @@ if(ENABLE_HPX)
 
   find_package(HPX REQUIRED NO_CMAKE_PACKAGE_REGISTRY)
 
+  if(NOT HPX_FOUND)
+      message(FATAL_ERROR "HPX is required
+                     for this build configuration")
+  endif(NOT HPX_FOUND)
+
+  set(CMAKE_PREFIX_PATH  ${CMAKE_PREFIX_PATH}
+     ${HPX_INSTALL_DIR})
+
   include_directories(${HPX_INCLUDE_DIRS})
-  link_directories(${HPX_LIBRARY_DIR})
 
   add_definitions(-DENABLE_HPX)
   if(MSVC)
